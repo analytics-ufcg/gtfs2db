@@ -30,7 +30,8 @@ CREATE TABLE `agency` (
 DROP TABLE IF EXISTS stops;
 -- stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon,zone_id,stop_url,location_type,parent_station,stop_timezone,wheelchair_boarding
 CREATE TABLE `stops` (
-    stop_id VARCHAR(255) NOT NULL PRIMARY KEY,
+	city_id int NOT NULL,
+    stop_id VARCHAR(255) NOT NULL,
 	stop_code VARCHAR(255),
 	stop_name VARCHAR(255),
 	stop_desc VARCHAR(255),
@@ -41,7 +42,8 @@ CREATE TABLE `stops` (
 	location_type INT(2),
 	parent_station VARCHAR(255),
 	stop_timezone VARCHAR(50),
-	wheelchair_boarding INT(2)
+	wheelchair_boarding INT(2),
+    CONSTRAINT stops_pk PRIMARY KEY (city_id,stop_id)
 );
 
 DROP TABLE IF EXISTS routes;
@@ -83,6 +85,7 @@ CREATE TABLE `calendar` (
 DROP TABLE IF EXISTS shapes;
 -- shape_id,shape_pt_lat,shape_pt_lon,shape_pt_sequence
 CREATE TABLE `shapes` (
+	city_id int NOT NULL,
 	shape_id VARCHAR(255),
 	shape_pt_lat DECIMAL(10,6),
 	shape_pt_lon DECIMAL(10,6),
@@ -94,7 +97,7 @@ DROP TABLE IF EXISTS trips;
 -- trip_id,route_id,service_id,trip_headsign,trip_short_name,direction_id,shape_id
 CREATE TABLE `trips` (
     city_id int NOT NULL,
-	trip_id VARCHAR(255) NOT NULL PRIMARY KEY,	
+	trip_id VARCHAR(255) NOT NULL,	
 	route_id VARCHAR(255),
 	service_id VARCHAR(255),
 	trip_headsign VARCHAR(255),
@@ -103,17 +106,19 @@ CREATE TABLE `trips` (
 	block_id VARCHAR(255),
 	shape_id VARCHAR(255),
 	wheelchair_accessible TINYINT(1),
+	CONSTRAINT trips_pk PRIMARY KEY (city_id,trip_id),
 	FOREIGN KEY (city_id,route_id) REFERENCES routes(city_id,route_id),
 	FOREIGN KEY (city_id,service_id) REFERENCES calendar(city_id,service_id),
 	/*FOREIGN KEY (shape_id) REFERENCES shapes(shape_id),*/
 	KEY `route_key` (city_id,route_id),
-	KEY `service_id` (city_id,service_id),
+	KEY `service_key` (city_id,service_id),
 	KEY `direction_id` (direction_id)
 );
 
 DROP TABLE IF EXISTS stop_times;
 -- trip_id,arrival_time,stop_id,stop_sequence,departure_time,stop_headsign,pickup_type,drop_off_type,shape_dist_traveled
 CREATE TABLE `stop_times` (
+	city_id int NOT NULL,
     trip_id VARCHAR(255),
 	arrival_time TIME,
 	departure_time TIME,
@@ -123,10 +128,10 @@ CREATE TABLE `stop_times` (
 	pickup_type INT(2),
 	drop_off_type INT(2),
 	shape_dist_traveled VARCHAR(8),
-	FOREIGN KEY (trip_id) REFERENCES trips(trip_id),
-	FOREIGN KEY (stop_id) REFERENCES stops(stop_id),
-	KEY `trip_id` (trip_id),
-	KEY `stop_id` (stop_id),
+	FOREIGN KEY (city_id,trip_id) REFERENCES trips(city_id,trip_id),
+	FOREIGN KEY (city_id,stop_id) REFERENCES stops(city_id,stop_id),
+	KEY `trip_key` (city_id,trip_id),
+	KEY `stop_key` (city_id,stop_id),
 	KEY `stop_sequence` (stop_sequence),
 	KEY `pickup_type` (pickup_type),
 	KEY `drop_off_type` (drop_off_type)
@@ -147,12 +152,14 @@ CREATE TABLE `calendar_dates` (
 DROP TABLE IF EXISTS fare_attributes;
 -- fare_id, price, currency_type, payment_method, transfers, transfer_duration
 CREATE TABLE `fare_attributes` (
-    fare_id VARCHAR(255) NOT NULL PRIMARY KEY,
+	city_id int NOT NULL,
+    fare_id VARCHAR(255) NOT NULL,
     price FLOAT(5,2),
     currency_type VARCHAR(10),
 	payment_method 	TINYINT(1),
 	transfers TINYINT(1),
-	transfer_duration INT(10)
+	transfer_duration INT(10),
+	CONSTRAINT fare_attributes_pk PRIMARY KEY (city_id,fare_id)
 );
 
 DROP TABLE IF EXISTS fare_rules;
@@ -165,35 +172,38 @@ CREATE TABLE `fare_rules` (
 	destination_id VARCHAR(255),
 	contains_id VARCHAR(255),
 	FOREIGN KEY (city_id,route_id) REFERENCES routes(city_id,route_id),
-	FOREIGN KEY (fare_id) REFERENCES fare_attributes(fare_id)
+	FOREIGN KEY (city_id,fare_id) REFERENCES fare_attributes(city_id,fare_id)
 );
 
 DROP TABLE IF EXISTS frequencies;
 -- trip_id,start_time,end_time,headway_secs
 CREATE TABLE `frequencies` (
+	city_id int NOT NULL,
 	trip_id VARCHAR(255),
 	start_time TIME,
 	end_time TIME,
 	headway_secs INT(10),
 	exact_times TINYINT(1),
-	FOREIGN KEY (trip_id) REFERENCES trips(trip_id)
+	FOREIGN KEY (city_id,trip_id) REFERENCES trips(city_id,trip_id)
 );
 
 DROP TABLE IF EXISTS transfers;
 -- from_stp_id,to_stop_id,transfer_type,min_transfer_time
 CREATE TABLE `transfers` (
+	city_id int NOT NULL,
 	from_stop_id VARCHAR(255),
 	to_stop_id VARCHAR(255),
 	transfer_type TINYINT(2),
 	min_transfer_time INT(10),
-	FOREIGN KEY (from_stop_id) REFERENCES stops(stop_id),
-	FOREIGN KEY (to_stop_id) REFERENCES stops(stop_id),
+	FOREIGN KEY (city_id,from_stop_id) REFERENCES stops(city_id,stop_id),
+	FOREIGN KEY (city_id,to_stop_id) REFERENCES stops(city_id,stop_id),
 	KEY `transfer_type` (transfer_type)  
 );
 
 DROP TABLE IF EXISTS feed_info;
 -- feed_publisher_name,feed_publisher_url,feed_lang,feed_start_date,feed_end_date,feed_version
 CREATE TABLE `feed_info` (
+	city_id int NOT NULL,
 	feed_publisher_name VARCHAR(255),
 	feed_publisher_url VARCHAR(255),
 	feed_lang VARCHAR(255),

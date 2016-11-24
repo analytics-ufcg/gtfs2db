@@ -10,7 +10,7 @@ DEF_UPDATED_GTFS_FOLDER_NAME = "updated-gtfs"
 DEF_GTFS_FILE_EXT = ".txt"
 base_mysql_cmd = "mysql -D gtfs -u {db_username} -p{db_password} -ss -e \"{mysql_cmd}\""
 base_insert_city_cmd = "INSERT INTO city (city_name,insertion_date) VALUES ('{cityname}','{insert_date}'); SELECT LAST_INSERT_ID();"
-base_insert_csv_into_table_cmd = "LOAD DATA LOCAL INFILE '{file_path}' INTO TABLE {table_name} FIELDS TERMINATED BY ',' IGNORE 1 LINES ({columns_names});"
+base_insert_csv_into_table_cmd = "LOAD DATA LOCAL INFILE '{file_path}' INTO TABLE {table_name} FIELDS TERMINATED BY ',' LINES TERMINATED BY '\r\n' IGNORE 1 LINES ({columns_names});"
 
 gtfs_files = ["agency","stops","routes","calendar","shapes","trips","stop_times","calendar_dates","fare_attributes","fare_rules","frequencies","transfers","feed_info"]
 

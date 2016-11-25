@@ -31,7 +31,7 @@ DROP TABLE IF EXISTS stops;
 -- stop_id,stop_code,stop_name,stop_desc,stop_lat,stop_lon,zone_id,stop_url,location_type,parent_station,stop_timezone,wheelchair_boarding
 CREATE TABLE `stops` (
 	city_id int NOT NULL,
-    stop_id VARCHAR(255) NOT NULL,
+    	stop_id VARCHAR(255) NOT NULL,
 	stop_code VARCHAR(255),
 	stop_name VARCHAR(255),
 	stop_desc VARCHAR(255),
@@ -43,7 +43,9 @@ CREATE TABLE `stops` (
 	parent_station VARCHAR(255),
 	stop_timezone VARCHAR(50),
 	wheelchair_boarding INT(2),
-    CONSTRAINT stops_pk PRIMARY KEY (city_id,stop_id)
+	vehicle_type INT(2),
+	platform_code VARCHAR(20),
+    	CONSTRAINT stops_pk PRIMARY KEY (city_id,stop_id)
 );
 
 DROP TABLE IF EXISTS routes;
@@ -59,7 +61,7 @@ CREATE TABLE `routes` (
 	route_url VARCHAR(255),
 	route_color VARCHAR(20),
 	route_text_color VARCHAR(20),
-    CONSTRAINT routes_pk PRIMARY KEY (city_id,route_id),
+    	CONSTRAINT routes_pk PRIMARY KEY (city_id,route_id),
 	FOREIGN KEY (city_id,agency_id) REFERENCES agency(city_id,agency_id),
 	KEY `agency_key` (city_id,agency_id),
 	KEY `route_type` (route_type)
@@ -153,12 +155,14 @@ DROP TABLE IF EXISTS fare_attributes;
 -- fare_id, price, currency_type, payment_method, transfers, transfer_duration
 CREATE TABLE `fare_attributes` (
 	city_id int NOT NULL,
-    fare_id VARCHAR(255) NOT NULL,
-    price FLOAT(5,2),
-    currency_type VARCHAR(10),
+    	fare_id VARCHAR(255) NOT NULL,
+    	price FLOAT(5,2),
+    	currency_type VARCHAR(10),
 	payment_method 	TINYINT(1),
 	transfers TINYINT(1),
 	transfer_duration INT(10),
+	agency_id VARCHAR(255),
+	FOREIGN KEY (city_id,agency_id) REFERENCES agency(city_id,agency_id),
 	CONSTRAINT fare_attributes_pk PRIMARY KEY (city_id,fare_id)
 );
 
@@ -210,6 +214,15 @@ CREATE TABLE `feed_info` (
 	feed_start_date DATE,
 	feed_end_date DATE,
 	feed_version VARCHAR(255) 
+);
+
+DROP TABLE IF EXISTS translations;
+-- trans_id, lang, translation
+CREATE TABLE `translations` (
+	city_id int NOT NULL,
+	trans_id VARCHAR(255) NOT NULL,
+	lang VARCHAR(255) NOT NULL,
+	translation VARCHAR(255) NOT NULL
 );
 
 

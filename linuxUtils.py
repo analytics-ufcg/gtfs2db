@@ -5,7 +5,7 @@ import subprocess
 class LinuxUtils():
     @staticmethod
     def runLinuxCommand(command):
-        print command
+        #print command
         proc = subprocess.Popen(command,stdout=subprocess.PIPE,shell=True)
         #proc.wait()
         return (proc.communicate(),proc.returncode)

@@ -12,6 +12,12 @@ base_mysql_cmd = "mysql -D gtfs -u {db_username} -p{db_password} -ss -e \"{mysql
 base_insert_city_cmd = "INSERT INTO city (city_name,insertion_date) VALUES ('{cityname}','{insert_date}'); SELECT LAST_INSERT_ID();"
 base_insert_csv_into_table_cmd = "LOAD DATA LOCAL INFILE '{file_path}' INTO TABLE {table_name} FIELDS TERMINATED BY ',' LINES TERMINATED BY '\r\n' IGNORE 1 LINES ({columns_names});"
 
+get_columns_name = "mysql -D gtfs -u {db_username} -p{db_password} -ss -e \"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS where TABLE_NAME = '{table_name}';\""
+
+
+
+
+#gtfs_files = ["trips"]
 gtfs_files = ["agency","stops","routes","calendar","shapes","trips","stop_times","calendar_dates","fare_attributes","fare_rules","frequencies","transfers","feed_info"]
 
 def printUsage():
@@ -27,6 +33,22 @@ def get_csv_header(csv_filepath):
 		header = ','.join(next(reader))
 	return header
 
+def insersection_between_attributes(csv_path, db_user,db_pwd,table):
+	get_column_name_cmd = get_columns_name.format(db_username=db_user,db_password=db_pwd,table_name=table)
+	csv_header = get_csv_header(csv_path)
+
+	cmd1 = linuxUtils.LinuxUtils.runLinuxCommand(get_column_name_cmd)
+	
+	attributes = cmd1[0][0].split()
+	list_csv_header = csv_header.split(',')
+		
+	header = (set(attributes).intersection(list_csv_header))
+	
+	header_update = ','.join(header)
+
+	return header_update
+
+
 def prepare_insert_city_statement(city_name):
     insertion_date = datetime.date.today().strftime("%Y-%m-%d")
     insert_city_cmd =  base_insert_city_cmd.format(cityname=city_name,insert_date=insertion_date)
@@ -36,9 +58,8 @@ def prepare_mysql_cmd(db_user,db_pwd,cmd):
 	mysql_cmd = base_mysql_cmd.format(db_username=db_user,db_password=db_pwd,mysql_cmd=cmd)
 	return mysql_cmd
 
-def prepare_insert_csv_into_table_statement(csv_path,tab_name):
-	csv_header = get_csv_header(csv_path)
-	insert_csv_into_table_cmd = base_insert_csv_into_table_cmd.format(file_path=csv_path, table_name=tab_name, columns_names=csv_header)
+def prepare_insert_csv_into_table_statement(csv_path,tab_name, field_names):
+	insert_csv_into_table_cmd = base_insert_csv_into_table_cmd.format(file_path=csv_path, table_name=tab_name, columns_names=field_names)
 	return insert_csv_into_table_cmd
 
 def update_csv_with_city_id(old_csv_filepath,new_csv_filepath,city_id):
@@ -82,8 +103,11 @@ for gtfs_file in gtfs_files:
 	new_gtfs_file_path = updated_gtfs_folder + os.sep + gtfs_file + DEF_GTFS_FILE_EXT
 	if os.path.isfile(gtfs_file_path):
 		update_csv_with_city_id(gtfs_file_path,new_gtfs_file_path,city_id)
-		insert_table_cmd = prepare_mysql_cmd(db_user,db_pwd,prepare_insert_csv_into_table_statement(new_gtfs_file_path,gtfs_file))
+		field_names = insersection_between_attributes(new_gtfs_file_path,db_user,db_pwd,gtfs_file)
+		insert_table_cmd = prepare_mysql_cmd(db_user,db_pwd,prepare_insert_csv_into_table_statement(new_gtfs_file_path,gtfs_file, field_names))
 		linuxUtils.LinuxUtils.runLinuxCommand(insert_table_cmd)
+		#print insersection_between_attributes(new_gtfs_file_path,db_user,db_pwd,gtfs_file)
+		#break
 	else:
 		print "GTFS file:", gtfs_file, "not found."
 

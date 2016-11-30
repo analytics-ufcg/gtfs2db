@@ -14,9 +14,6 @@ base_insert_csv_into_table_cmd = "LOAD DATA LOCAL INFILE '{file_path}' INTO TABL
 
 get_columns_name = "mysql -D gtfs -u {db_username} -p{db_password} -ss -e \"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS where TABLE_NAME = '{table_name}';\""
 
-
-
-
 #gtfs_files = ["trips"]
 gtfs_files = ["agency","stops","routes","calendar","shapes","trips","stop_times","calendar_dates","fare_attributes","fare_rules","frequencies","transfers","feed_info"]
 
@@ -42,11 +39,14 @@ def insersection_between_attributes(csv_path, db_user,db_pwd,table):
 	attributes = cmd1[0][0].split()
 	list_csv_header = csv_header.split(',')
 		
-	header = (set(attributes).intersection(list_csv_header))
+	header = []
+	for field in list_csv_header:
+		if field in attributes:
+			header.append(field)
 	
-	header_update = ','.join(header)
+	updated_header = ','.join(header)
 
-	return header_update
+	return updated_header
 
 
 def prepare_insert_city_statement(city_name):
@@ -105,9 +105,7 @@ for gtfs_file in gtfs_files:
 		update_csv_with_city_id(gtfs_file_path,new_gtfs_file_path,city_id)
 		field_names = insersection_between_attributes(new_gtfs_file_path,db_user,db_pwd,gtfs_file)
 		insert_table_cmd = prepare_mysql_cmd(db_user,db_pwd,prepare_insert_csv_into_table_statement(new_gtfs_file_path,gtfs_file, field_names))
-		linuxUtils.LinuxUtils.runLinuxCommand(insert_table_cmd)
-		#print insersection_between_attributes(new_gtfs_file_path,db_user,db_pwd,gtfs_file)
-		#break
+		print linuxUtils.LinuxUtils.runLinuxCommand(insert_table_cmd)
 	else:
 		print "GTFS file:", gtfs_file, "not found."
 
